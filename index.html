@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔒 For Your Eyes Only</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Caveat:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+<style>
+  :root {
+    --cream: #FDF6EC;
+    --ink: #2C1810;
+    --gold: #C8956C;
+    --gold-light: #E8C9A8;
+    --red-wax: #8B2500;
+    --parchment: #F5E6D0;
+    --sage: #7A8B6F;
+    --sage-light: #A8B89E;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(139,115,85,0.03) 50px, rgba(139,115,85,0.03) 51px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ══════════════════════════════
+     PASSWORD SCREEN
+     ══════════════════════════════ */
+  .lock-screen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .lock-screen.unlocked {
+    opacity: 0;
+    transform: scale(1.1);
+    pointer-events: none;
+  }
+
+  .lock-box {
+    text-align: center;
+    padding: 40px;
+    max-width: 400px;
+    width: 90%;
+  }
+
+  .lock-emoji {
+    font-size: 56px;
+    margin-bottom: 24px;
+    animation: lockPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes lockPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  .lock-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--cream);
+    margin-bottom: 8px;
+  }
+
+  .lock-subtitle {
+    font-family: 'Caveat', cursive;
+    font-size: 18px;
+    color: var(--gold);
+    margin-bottom: 36px;
+  }
+
+  .lock-input-wrap {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .lock-input {
+    width: 100%;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid var(--gold);
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    color: var(--cream);
+    text-align: center;
+    outline: none;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+  }
+
+  .lock-input::placeholder {
+    color: rgba(200,149,108,0.5);
+    letter-spacing: 0;
+  }
+
+  .lock-input:focus {
+    border-color: var(--gold-light);
+    background: rgba(255,255,255,0.12);
+    box-shadow: 0 0 24px rgba(200,149,108,0.15);
+  }
+
+  .lock-input.shake {
+    animation: shake 0.5s ease;
+    border-color: #E74C3C;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+  }
+
+  .lock-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--gold);
+    border: none;
+    border-radius: 14px;
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .lock-btn:hover {
+    background: var(--gold-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(200,149,108,0.3);
+  }
+
+  .lock-error {
+    font-size: 13px;
+    color: #E74C3C;
+    margin-top: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .lock-error.visible { opacity: 1; }
+
+  .lock-hint {
+    font-size: 12px;
+    color: rgba(200,149,108,0.4);
+    margin-top: 24px;
+    font-style: italic;
+  }
+
+  /* ══════════════════════════════
+     MAIN CONTENT
+     ══════════════════════════════ */
+  .content {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.8s ease 0.4s;
+  }
+
+  .content.visible {
+    display: block;
+    opacity: 1;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── TREATY HEADER ── */
+  .treaty-header {
+    text-align: center;
+    padding: 48px 0 40px;
+  }
+
+  .treaty-header::before {
+    content: '⚜';
+    display: block;
+    font-size: 28px;
+    color: var(--gold);
+    margin-bottom: 16px;
+    animation: fadeDown 1s ease-out;
+  }
+
+  .treaty-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  .treaty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 7vw, 52px);
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .treaty-subtitle {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(16px, 3.5vw, 22px);
+    color: var(--gold);
+    font-weight: 400;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 36px auto;
+    max-width: 300px;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gold-light);
+  }
+
+  .divider-icon { color: var(--gold); font-size: 14px; }
+
+  /* ── PREAMBLE ── */
+  .preamble {
+    text-align: center;
+    max-width: 540px;
+    margin: 0 auto 44px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: #5A4A3A;
+    animation: fadeUp 1s ease-out 0.3s both;
+  }
+
+  .preamble strong { color: var(--ink); font-weight: 500; }
+
+  /* ── ARTICLES ── */
+  .articles { margin-bottom: 48px; }
+
+  .article {
+    background: var(--parchment);
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease-out both;
+    transition: transform 0.2s ease;
+  }
+
+  .article:hover { transform: translateY(-2px); }
+  .article:nth-child(1) { animation-delay: 0.5s; }
+  .article:nth-child(2) { animation-delay: 0.65s; }
+  .article:nth-child(3) { animation-delay: 0.8s; }
+  .article:nth-child(4) { animation-delay: 0.95s; }
+
+  .article::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--gold);
+    border-radius: 4px 0 0 4px;
+  }
+
+  .article-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .article-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #4A3A2A;
+  }
+
+  .article-text em { font-style: italic; }
+
+  .checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .checkbox {
+    width: 22px; height: 22px;
+    border: 2px solid var(--gold);
+    border-radius: 6px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    background: white;
+  }
+
+  .checkbox.checked { background: var(--gold); border-color: var(--gold); }
+  .checkbox.checked::after { content: '✓'; color: white; font-size: 14px; font-weight: 700; }
+
+  .checkbox-label {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #5A4A3A;
+    font-style: italic;
+  }
+
+  /* ── DATE CARDS ── */
+  .dates-header {
+    text-align: center;
+    margin: 56px 0 12px;
+    animation: fadeUp 0.6s ease-out 1.1s both;
+  }
+
+  .dates-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .dates-header p {
+    font-size: 14px;
+    color: #8A7A6A;
+    font-style: italic;
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .dates-grid {
+    display: grid;
+    gap: 20px;
+    margin-top: 28px;
+  }
+
+  .date-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease-out both;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+
+  .date-card:nth-child(1) { animation-delay: 1.3s; }
+  .date-card:nth-child(2) { animation-delay: 1.45s; }
+  .date-card:nth-child(3) { animation-delay: 1.6s; }
+  .date-card:nth-child(4) { animation-delay: 1.75s; }
+  .date-card:nth-child(5) { animation-delay: 1.9s; }
+
+  .date-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(200,149,108,0.18);
+  }
+
+  .date-card-top {
+    padding: 24px 28px 20px;
+  }
+
+  .date-card-title-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .date-number-badge {
+    width: 48px; height: 48px;
+    background: var(--parchment);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .date-number-badge .num {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .date-number-badge .label {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .date-card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-top: 4px;
+  }
+
+  .date-card-tagline {
+    font-family: 'Caveat', cursive;
+    font-size: 16px;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 14px;
+    padding-left: 62px;
+  }
+
+  .date-card-desc {
+    font-size: 14px;
+    color: #6A5A4A;
+    line-height: 1.7;
+  }
+
+  .date-card-desc .menu-section {
+    margin-top: 14px;
+    padding: 16px 20px;
+    background: var(--parchment);
+    border-radius: 12px;
+  }
+
+  .menu-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .menu-item {
+    font-size: 13px;
+    color: #5A4A3A;
+    padding: 3px 0;
+    display: flex;
+    gap: 8px;
+  }
+
+  .menu-item .course {
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .date-card-footer {
+    background: var(--parchment);
+    padding: 14px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .date-meta {
+    display: flex;
+    gap: 16px;
+  }
+
+  .date-meta-item {
+    font-size: 12px;
+    color: #8A7A6A;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .date-mood {
+    font-family: 'Caveat', cursive;
+    font-size: 13px;
+    color: var(--sage);
+    background: rgba(122,139,111,0.1);
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+
+  /* ── SIGNATURE ── */
+  .signature-section {
+    margin-top: 56px;
+    text-align: center;
+    animation: fadeUp 0.6s ease-out 2.2s both;
+  }
+
+  .signature-section > p {
+    font-size: 14px;
+    color: #8A7A6A;
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+
+  .signatures {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    margin-bottom: 32px;
+  }
+
+  .sig-block { text-align: center; }
+
+  .sig-name {
+    font-family: 'Caveat', cursive;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .sig-name.waiting {
+    color: var(--gold-light);
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+
+  .sig-name.waiting:hover { color: var(--gold); }
+
+  .sig-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #AAA;
+    border-top: 1px solid #DDD;
+    padding-top: 8px;
+  }
+
+  .sign-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--red-wax);
+    color: white;
+    border: none;
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 16px 40px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(139,37,0,0.25);
+  }
+
+  .sign-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(139,37,0,0.35); }
+  .sign-btn:active { transform: translateY(0); }
+  .sign-btn.signed { background: var(--sage); box-shadow: 0 4px 16px rgba(122,139,111,0.25); }
+
+  .sealed-msg {
+    display: none;
+    text-align: center;
+    margin-top: 40px;
+    padding: 40px 24px;
+    animation: sealReveal 0.8s ease-out;
+  }
+
+  .sealed-msg.visible { display: block; }
+  .seal-emoji { font-size: 48px; margin-bottom: 16px; }
+
+  .sealed-msg h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .sealed-msg p {
+    font-family: 'Caveat', cursive;
+    font-size: 22px;
+    color: #5A4A3A;
+    line-height: 1.6;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+
+  .sealed-date {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: #AAA;
+    letter-spacing: 2px;
+    margin-top: 32px;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes sealReveal {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  .confetti-piece {
+    position: fixed;
+    width: 10px; height: 10px;
+    top: -20px;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @media (max-width: 480px) {
+    .container { padding: 24px 16px 60px; }
+    .article { padding: 22px 20px 20px; }
+    .signatures { gap: 32px; }
+    .date-card-top { padding: 20px 20px 16px; }
+    .date-card-footer { padding: 12px 20px; }
+    .date-card-tagline { padding-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ PASSWORD SCREEN ══════════ -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-emoji">🔒</div>
+    <div class="lock-title">For Your Eyes Only</div>
+    <div class="lock-input-wrap">
+      <input type="text" class="lock-input" id="passInput" placeholder="enter password..." autocomplete="off" autofocus>
+    </div>
+    <button class="lock-btn" id="passBtn" onclick="tryUnlock()">Open</button>
+    <div class="lock-error" id="lockError">Nope, try again 🙃</div>
+    <div class="lock-hint">hint: who is DD's girlfriend?</div>
+  </div>
+</div>
+
+<!-- ══════════ MAIN CONTENT ══════════ -->
+<div class="content" id="mainContent">
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="treaty-header">
+    <div class="treaty-label">Issued on the 22nd of May 2026</div>
+    <h1 class="treaty-title">Official Peace Treaty</h1>
+    <div class="treaty-subtitle">Between Boblu &amp; Boblu</div>
+  </div>
+
+  <div class="divider"><span class="divider-icon">✦</span></div>
+
+  <!-- PREAMBLE -->
+  <div class="preamble">
+    Whereas the Party of the First Part (hereinafter referred to as <strong>"Boblu/Bo/Bobbles/Goblu"</strong>) did, through certain unfortunate, unintended comments, cause distress to the Party of the Second Part (hereinafter referred to as <strong>"The Cutie"</strong>), this treaty is hereby drawn to restore peace, harmony and funsies across 6,730km.
+  </div>
+
+  <!-- ARTICLES -->
+  <div class="articles">
+    <div class="article">
+      <div class="article-number">Article I — Acknowledgement</div>
+      <div class="article-text">
+        Boblu fully acknowledges that the comments in question were, in technical legal terms, <em>really dumb and poorly phrased (unintentionally)</em>. He recognizes that thinking before speaking is a life-skill that he hopes to learn once he grows up (he is still a smol little growing boy). He didn't mean any ill by those comments, and the last thing he ever wants to do is make the cutie feel bad.
+      </div>
+      <div class="checkbox-row" onclick="toggleCheck(this)">
+        <div class="checkbox"></div>
+        <div class="checkbox-label">I, <strong>The Cutie</strong>, accept that <strong>Bobbles</strong> does in fact know he <strong>is a donut</strong></div>
+      </div>
+    </div>
+
+    <div class="article">
+      <div class="article-number">Article II — Genuine Apology</div>
+      <div class="article-text">
+        (Serious tone slightly) Simbo, the last thing I ever want to do is make you feel hurt, and I hate more than anything that I'm the one causing you this distress. You matter more to me than <strong>1) being right</strong> (mind boggling, I know) or <strong>2) being funny/jokey</strong> (bhai, krezzy bol diya).
+      </div>
+      <div class="checkbox-row" onclick="toggleCheck(this)">
+        <div class="checkbox"></div>
+        <div class="checkbox-label">I, The Cutie, accept this apology</div>
+      </div>
+    </div>
+
+    <div class="article">
+      <div class="article-number">Article III — Non-Repetition Clause</div>
+      <div class="article-text">
+        Boblu hereby pledges to think more about what he says, be more considerate with the words he chooses and the tone he says it in. Though he means no harm, judgement or hurt, he understands how that can come across negatively at times. The Cutie reserves the right to make full <strong>"kachumbar"</strong> out of Boblu if he breaches this clause.
+      </div>
+      <div class="checkbox-row" onclick="toggleCheck(this)">
+        <div class="checkbox"></div>
+        <div class="checkbox-label"><strong>"Kachumbar"</strong> rights are hereby confirmed</div>
+      </div>
+    </div>
+
+    <div class="article">
+      <div class="article-number">Article IV — Reparations</div>
+      <div class="article-text">
+        Boblu hereby, as demonstration of the effort he wants to put into SJ feeling maxx loved always, has pre-planned five virtual dates (infinite reuse permitted). No low-effort BS included here.
+      </div>
+      <div class="checkbox-row" onclick="toggleCheck(this)">
+        <div class="checkbox"></div>
+        <div class="checkbox-label">I am slightly impressed by the effort</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATES -->
+  <div class="dates-header">
+    <h2>5 Date Nights, Pre-Planned</h2>
+    <p>No "what do you want to do?" allowed. Each one is ready for deployment.</p>
+  </div>
+
+  <div class="dates-grid">
+
+    <!-- DATE 1 -->
+    <div class="date-card">
+      <div class="date-card-top">
+        <div class="date-card-title-row">
+          <div class="date-number-badge">
+            <span class="num">01</span>
+            <span class="label">DATE</span>
+          </div>
+          <div class="date-card-title">🍳 Cook Together, Eat Together</div>
+        </div>
+        <div class="date-card-tagline">"One 3-course meal, two kitchens, one candle minimum required"</div>
+        <div class="date-card-desc">
+          The idea is that we cook (kind-off) one 3-course meal together and have a nice sit-down meal together on video (with one candle minimum required at each table). I came up with two set-menu options:
+
+          <div class="menu-section">
+            <div class="menu-label">🍽️ Set Menu A — Your Favourites</div>
+            <div class="menu-item"><span class="course">Starter:</span> Papad ki Sabzi (the sila papad dish, is this what it's called (?))</div>
+            <div class="menu-item"><span class="course">Main:</span> Nepali Chaukhani</div>
+            <div class="menu-item"><span class="course">Dessert:</span> Fresh Fruit Gateaux</div>
+          </div>
+
+          <div class="menu-section" style="margin-top: 10px;">
+            <div class="menu-label">🍽️ Set Menu B — Things I Want to Cook For You IRL Soon</div>
+            <div class="menu-item"><span class="course">Starter:</span> Crispy Lotus Stems</div>
+            <div class="menu-item"><span class="course">Main:</span> Teriyaki Paneer and Noodles (the one you've seen me cook many times on video)</div>
+            <div class="menu-item"><span class="course">Dessert:</span> ROCKY ROAD CAKE!!!</div>
+          </div>
+        </div>
+      </div>
+      <div class="date-card-footer">
+        <div class="date-meta">
+          <div class="date-meta-item">⏱️ As much time as you have</div>
+          <div class="date-meta-item">🕐 Your dinner, my late lunch</div>
+        </div>
+        <div class="date-mood">Cozy & Chaotic</div>
+      </div>
+    </div>
+
+    <!-- DATE 2 -->
+    <div class="date-card">
+      <div class="date-card-top">
+        <div class="date-card-title-row">
+          <div class="date-number-badge">
+            <span class="num">02</span>
+            <span class="label">DATE</span>
+          </div>
+          <div class="date-card-title">🎬 Double Movie Night</div>
+        </div>
+        <div class="date-card-tagline">"Two movies. One Hindi, one English. All you have to do is watch."</div>
+        <div class="date-card-desc">
+          I arrange logistics, ambience (kind-off) and snacks! The choices to me are quite obvious:
+          <div class="menu-section">
+            <div class="menu-item"><span class="course">Hindi:</span> Two States (hehehehehe)</div>
+            <div class="menu-item"><span class="course">English:</span> Mr &amp; Mrs Smith (duh!! I swear I thought about this a bunch)</div>
+          </div>
+        </div>
+      </div>
+      <div class="date-card-footer">
+        <div class="date-meta">
+          <div class="date-meta-item">⏱️ ~till we both sleepies</div>
+          <div class="date-meta-item">🕐 My evening, your night</div>
+        </div>
+        <div class="date-mood">Classic & Chill</div>
+      </div>
+    </div>
+
+    <!-- DATE 3 -->
+    <div class="date-card">
+      <div class="date-card-top">
+        <div class="date-card-title-row">
+          <div class="date-number-badge">
+            <span class="num">03</span>
+            <span class="label">DATE</span>
+          </div>
+          <div class="date-card-title">🗺️ Quiz Night</div>
+        </div>
+        <div class="date-card-tagline">"Multiple categories. Pre-defined scoring. One clear winner (me)."</div>
+        <div class="date-card-desc">
+          We go head to head (and I win most probs), in a quiz night. I'm going to get a looooong quiz created that spans everything — multiple question types, multiple categories, pre-defined scoring format. The loser (you) takes on the task of creating the next quiz hehe ;)
+        </div>
+      </div>
+      <div class="date-card-footer">
+        <div class="date-meta">
+          <div class="date-meta-item">⏱️ ~45 min</div>
+          <div class="date-meta-item">🕐 My morning / your afternoon</div>
+        </div>
+        <div class="date-mood">Brainy & Competitive</div>
+      </div>
+    </div>
+
+    <!-- DATE 4 -->
+    <div class="date-card">
+      <div class="date-card-top">
+        <div class="date-card-title-row">
+          <div class="date-number-badge">
+            <span class="num">04</span>
+            <span class="label">DATE</span>
+          </div>
+          <div class="date-card-title">🧩 Game Night Showdown</div>
+        </div>
+        <div class="date-card-tagline">"7 games, 1 winner. Simple."</div>
+        <div class="date-card-desc">
+          GeoGuesser, Scrabble, Chess, BattleShips, Connect 4, Trivial Pursuit and Rummy.
+          <br><br>
+          Winner gets to make <strong>one request</strong> of the Loser that must be obliged.
+        </div>
+      </div>
+      <div class="date-card-footer">
+        <div class="date-meta">
+          <div class="date-meta-item">⏱️🕐 Whenever, Wherever</div>
+        </div>
+        <div class="date-mood">🎵 OLAY OLAY OLAY</div>
+      </div>
+    </div>
+
+    <!-- DATE 5 -->
+    <div class="date-card">
+      <div class="date-card-top">
+        <div class="date-card-title-row">
+          <div class="date-number-badge">
+            <span class="num">05</span>
+            <span class="label">DATE</span>
+          </div>
+          <div class="date-card-title">✨ Memory Lane Night</div>
+        </div>
+        <div class="date-card-tagline">"5 Old Pictures and The Stories Behind Them"</div>
+        <div class="date-card-desc">
+          We both create a slide deck that contains 5 pictures from the past, that have a meaningful, cute, or funny story associated with them. We then present these pictures (<strong>suit and tie mandatory</strong>) so that we can both learn more about each other hehehe.
+        </div>
+      </div>
+      <div class="date-card-footer">
+        <div class="date-meta">
+          <div class="date-meta-item">⏱️ ~1203981093821 hours</div>
+          <div class="date-meta-item">🕐 My afternoon, your evening</div>
+        </div>
+        <div class="date-mood">Nostalgic & Warm</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SIGNATURE -->
+  <div class="divider" style="margin-top: 56px;"><span class="divider-icon">✦</span></div>
+
+  <div class="signature-section">
+    <p>Signed in order to further the peace between the great nations of Boblu and Boblu</p>
+    <div class="signatures">
+      <div class="sig-block">
+        <div class="sig-name">Boblu</div>
+        <div class="sig-label">The Boblu</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-name waiting" id="simranSig" onclick="document.getElementById('signBtn').click()">tap to sign</div>
+        <div class="sig-label">The Cutie</div>
+      </div>
+    </div>
+
+    <button class="sign-btn" id="signBtn" onclick="signTreaty()">
+      🖋️ Sign &amp; Seal This Treaty
+    </button>
+
+    <div class="sealed-msg" id="sealedMsg">
+      <div class="seal-emoji">❤️</div>
+      <h3>Treaty Sealed</h3>
+      <p>Okay so... we're good now, right? Because these two days without properly talking to you felt endless. Distance is hard enough — let's not add silence to it. I'm here, I'm sorry, and I've got five dates to prove it.</p>
+      <div class="sealed-date" id="sealDate"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+  // ── PASSWORD ──
+  const SECRET = "simran abhay jain";
+
+  document.getElementById('passInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') tryUnlock();
+  });
+
+  function tryUnlock() {
+    const input = document.getElementById('passInput');
+    const val = input.value.trim().toLowerCase();
+    if (val === SECRET) {
+      document.getElementById('lockScreen').classList.add('unlocked');
+      const content = document.getElementById('mainContent');
+      content.style.display = 'block';
+      setTimeout(() => content.classList.add('visible'), 50);
+      document.title = "Official Peace Treaty 💛";
+    } else {
+      input.classList.add('shake');
+      document.getElementById('lockError').classList.add('visible');
+      setTimeout(() => {
+        input.classList.remove('shake');
+      }, 500);
+      setTimeout(() => {
+        document.getElementById('lockError').classList.remove('visible');
+      }, 2500);
+    }
+  }
+
+  // ── CHECKBOXES ──
+  function toggleCheck(row) {
+    row.querySelector('.checkbox').classList.toggle('checked');
+  }
+
+  // ── SIGN ──
+  function signTreaty() {
+    const btn = document.getElementById('signBtn');
+    const sig = document.getElementById('simranSig');
+    const msg = document.getElementById('sealedMsg');
+
+    sig.textContent = 'The Cutie';
+    sig.classList.remove('waiting');
+    sig.style.color = 'var(--ink)';
+    sig.style.cursor = 'default';
+    sig.onclick = null;
+
+    btn.innerHTML = '✅ Treaty Signed';
+    btn.classList.add('signed');
+    btn.onclick = null;
+    btn.style.cursor = 'default';
+
+    msg.classList.add('visible');
+    document.getElementById('sealDate').textContent = 'Sealed on ' + new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    launchConfetti();
+
+    // Download PDF after a short delay for the sealed message to render
+    setTimeout(() => {
+      const element = document.querySelector('.container');
+      const opt = {
+        margin:       [10, 10, 10, 10],
+        filename:     'Peace-Treaty-Boblu-and-Boblu.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+      html2pdf().set(opt).from(element).save();
+    }, 1500);
+  }
+
+  function launchConfetti() {
+    const colors = ['#C8956C', '#8B2500', '#7A8B6F', '#E8C9A8', '#FFD700', '#FF6B6B'];
+    const shapes = ['■', '●', '▲', '♥', '✦'];
+    for (let i = 0; i < 60; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.color = colors[Math.floor(Math.random() * colors.length)];
+      el.style.fontSize = (Math.random() * 12 + 8) + 'px';
+      el.style.animation = `confettiFall ${Math.random() * 2 + 2}s ease-in ${Math.random() * 1.5}s forwards`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }
+  }
+</script>
+
+</body>
+</html>
