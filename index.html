@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🔒 For Your Eyes Only</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Caveat:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
 <style>
   :root {
     --cream: #FDF6EC;
@@ -672,7 +671,7 @@
     </div>
     <button class="lock-btn" id="passBtn" onclick="tryUnlock()">Open</button>
     <div class="lock-error" id="lockError">Nope, try again 🙃</div>
-    <div class="lock-hint">hint: who is DD's girlfriend?</div>
+    <div class="lock-hint">hint: who is DD's girlfriend? (include middle name)</div>
   </div>
 </div>
 
@@ -976,20 +975,6 @@
     document.getElementById('sealDate').textContent = 'Sealed on ' + new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
 
     launchConfetti();
-
-    // Download PDF after a short delay for the sealed message to render
-    setTimeout(() => {
-      const element = document.querySelector('.container');
-      const opt = {
-        margin:       [10, 10, 10, 10],
-        filename:     'Peace-Treaty-Boblu-and-Boblu.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-      html2pdf().set(opt).from(element).save();
-    }, 1500);
   }
 
   function launchConfetti() {
